@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Previsão de Captação - Versão Avançada</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment-business-days@1.2.0/index.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --august: #e74c3c;
+            --september: #f39c12;
+            --october: #27ae60;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            color: white;
+            animation: fadeIn 1s ease;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            color: #ecf0f1;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            padding: 25px;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+            animation: slideUp 0.6s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title i {
+            color: var(--secondary);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--secondary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        input[readonly] {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+        
+        button {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        button.secondary {
+            background: var(--success);
+        }
+        
+        button.secondary:hover {
+            background: #219653;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .result-card {
+            background: var(--light);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .result-card.august {
+            border-top: 4px solid var(--august);
+        }
+        
+        .result-card.september {
+            border-top: 4px solid var(--september);
+        }
+        
+        .result-card.october {
+            border-top: 4px solid var(--october);
+        }
+        
+        .result-card h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .result-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .august { color: var(--august); }
+        .september { color: var(--september); }
+        .october { color: var(--october); }
+        
+        .chart-container {
+            height: 400px;
+            margin-top: 20px;
+            position: relative;
+        }
+        
+        .progress-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .progress-bar {
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--secondary);
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--dark);
+        }
+        
+        .export-section {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .highlight {
+            background: #fff9c4;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .stat-card h4 {
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .daily-rate {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .daily-rate span {
+            color: var(--secondary);
+            font-size: 1.5rem;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            margin-top: 40px;
+            font-size: 0.9rem;
+        }
+        
+        .date-info {
+            display: flex;
+            justify-content: space-between;
+            background: #e3f2fd;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+        
+        .rate-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .rate-low {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .rate-medium {
+            background-color: #fffde7;
+            color: #f57f17;
+        }
+        
+        .rate-high {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .alert-box {
+            background-color: #ffebee;
+            border-left: 4px solid #e74c3c;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .month-projection-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .projection-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+        
+        .final-projection-card {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 25px 0;
+            border: 2px solid var(--secondary);
+        }
+        
+        .final-projection-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 10px 0;
+            color: var(--secondary);
+        }
+        
+        .scenario-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--warning);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .model-params {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .param-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .param-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .param-slider {
+            width: 100%;
+        }
+        
+        .param-value {
+            text-align: center;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+        
+        .scenario-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .scenario-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--secondary);
+        }
+        
+        .scenario-card h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .scenario-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 5px 0;
+            color: var(--secondary);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .date-info {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .scenario-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-chart-line"></i> Plataforma de Previsão de Captação Avançada</h1>
+            <p>Análise preditiva, simulação de cenários e acompanhamento estratégico de captação de alunos</p>
+        </header>
+        
+        <main>
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-cogs"></i> Configurações do Modelo</h2>
+                
+                <div class="model-params">
+                    <div class="param-group">
+                        <label for="growthFactor">Fator de Crescimento</label>
+                        <input type="range" id="growthFactor" min="0.8" max="1.5" step="0.05" value="1.15" class="param-slider">
+                        <div class="param-value" id="growthFactorValue">15%</div>
+                    </div>
+                    
+                    <div class="param-group">
+                        <label for="seasonalAdjust">Ajuste Sazonal (Agosto)</label>
+                        <input type="range" id="seasonalAdjust" min="0.7" max="1.3" step="0.05" value="1.0" class="param-slider">
+                        <div class="param-value" id="seasonalAdjustValue">0%</div>
+                    </div>
+                    
+                    <div class="param-group">
+                        <label for="historicalWeight">Peso de Dados Históricos</label>
+                        <input type="range" id="historicalWeight" min="0" max="100" step="5" value="60" class="param-slider">
+                        <div class="param-value" id="historicalWeightValue">60%</div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="saveModelBtn" style="background: var(--success);">
+                        <i class="fas fa-save"></i> Salvar Configuração
+                    </button>
+                    <button id="resetModelBtn">
+                        <i class="fas fa-undo"></i> Reverter para Padrão
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-book"></i> Dados do Curso</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="courseName">Nome do Curso</label>
+                        <input type="text" id="courseName" placeholder="Ex: MBA em Gestão Financeira" value="MBA em Gestão Financeira">
+                    </div>
+                    <div class="form-group">
+                        <label for="goal">Meta de Captação (alunos)</label>
+                        <input type="number" id="goal" placeholder="Ex: 100" min="1" value="120">
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="captured">Alunos Captados</label>
+                        <input type="number" id="captured" placeholder="Ex: 45" min="0" value="65">
+                    </div>
+                    <div class="form-group">
+                        <label for="daysPassed">Dias de Captação Passados</label>
+                        <input type="number" id="daysPassed" placeholder="Dias úteis já decorridos" min="1" value="72">
+                    </div>
+                    <div class="form-group">
+                        <label for="daysRemaining">Dias Restantes da Captação</label>
+                        <input type="number" id="daysRemaining" placeholder="Dias úteis restantes" min="0" value="58" readonly>
+                    </div>
+                </div>
+                
+                <div class="date-info">
+                    <div><strong>Data de início:</strong> 01/05/2025</div>
+                    <div><strong>Data atual:</strong> <span id="currentDate"></span></div>
+                    <div><strong>Término da captação:</strong> 31/10/2025</div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="calculateBtn">
+                        <i class="fas fa-calculator"></i> Calcular Previsões
+                    </button>
+                    <button id="resetBtn" class="secondary">
+                        <i class="fas fa-redo"></i> Limpar Campos
+                    </button>
+                    <button id="exampleBtn" style="background: var(--warning);">
+                        <i class="fas fa-lightbulb"></i> Carregar Exemplo
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-chart-line"></i> Resultados e Previsões</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>Meta Total</h4>
+                        <div class="stat-value" id="totalGoal">120</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Captados</h4>
+                        <div class="stat-value" id="totalCaptured">65</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Faltam</h4>
+                        <div class="stat-value" id="remaining">55</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Percentual</h4>
+                        <div class="stat-value" id="percentage">54.2%</div>
+                    </div>
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Progresso da Captação</span>
+                        <span id="progressPercentage">54.2%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 54.2%">54.2%</div>
+                    </div>
+                </div>
+                
+                <div class="daily-rate">
+                    <p>Taxa de captação diária atual: <span id="dailyRateValue">0.90</span> alunos/dia</p>
+                </div>
+                
+                <div class="final-projection-card">
+                    <h3><i class="fas fa-chart-line"></i> Previsão Final com Ritmo Atual</h3>
+                    <p>Total de alunos captados ao final do período:</p>
+                    <div class="final-projection-value" id="finalProjection">112</div>
+                    <p>Percentual da meta alcançado: <span id="finalProjectionPercent">93.3%</span></p>
+                </div>
+                
+                <h3 style="margin: 25px 0 15px; color: var(--primary);">
+                    <i class="fas fa-bullseye"></i> Previsões por Mês
+                </h3>
+                <div class="results-grid">
+                    <div class="result-card august">
+                        <h3>Agosto</h3>
+                        <p>Necessário captar</p>
+                        <div class="result-value august" id="augustNeeded">16</div>
+                        <p>Taxa diária necessária</p>
+                        <div class="result-value" id="augustRate">0.73</div>
+                        <div id="augustRateIndicator" class="rate-indicator rate-medium">
+                            <i class="fas fa-info-circle"></i> Moderado
+                        </div>
+                        <p><small><i class="fas fa-calendar-alt"></i> Dias úteis restantes: <span id="augustDays">22</span></small></p>
+                    </div>
+                    
+                    <div class="result-card september">
+                        <h3>Setembro</h3>
+                        <p>Necessário captar</p>
+                        <div class="result-value september" id="septemberNeeded">16</div>
+                        <p>Taxa diária necessária</p>
+                        <div class="result-value" id="septemberRate">0.53</div>
+                        <div id="septemberRateIndicator" class="rate-indicator rate-low">
+                            <i class="fas fa-check-circle"></i> Baixo
+                        </div>
+                        <p><small><i class="fas fa-calendar-alt"></i> Dias úteis restantes: <span id="septemberDays">30</span></small></p>
+                    </div>
+                    
+                    <div class="result-card october">
+                        <h3>Outubro (Crítico)</h3>
+                        <p>Necessário captar</p>
+                        <div class="result-value october" id="octoberNeeded">16</div>
+                        <p>Taxa diária necessária</p>
+                        <div class="result-value" id="octoberRate">0.84</div>
+                        <div id="octoberRateIndicator" class="rate-indicator rate-high">
+                            <i class="fas fa-exclamation-triangle"></i> Alto
+                        </div>
+                        <p><small><i class="fas fa-calendar-alt"></i> Dias úteis restantes: <span id="octoberDays">19</span></small></p>
+                    </div>
+                </div>
+                
+                <h3 style="margin: 25px 0 15px; color: var(--primary);">
+                    <i class="fas fa-project-diagram"></i> Projeção ao Final de Cada Mês
+                </h3>
+                <div class="results-grid">
+                    <div class="month-projection-card">
+                        <h3><i class="fas fa-calendar-check august"></i> Agosto</h3>
+                        <p>Previsão de captados</p>
+                        <div class="projection-value august" id="augustProjection">81</div>
+                        <p>Percentual da meta</p>
+                        <div class="projection-value" id="augustProjectionPercent">67.5%</div>
+                    </div>
+                    <div class="month-projection-card">
+                        <h3><i class="fas fa-calendar-check september"></i> Setembro</h3>
+                        <p>Previsão de captados</p>
+                        <div class="projection-value september" id="septemberProjection">98</div>
+                        <p>Percentual da meta</p>
+                        <div class="projection-value" id="septemberProjectionPercent">81.7%</div>
+                    </div>
+                    <div class="month-projection-card">
+                        <h3><i class="fas fa-calendar-check october"></i> Outubro</h3>
+                        <p>Previsão de captados</p>
+                        <div class="projection-value october" id="octoberProjection">112</div>
+                        <p>Percentual da meta</p>
+                        <div class="projection-value" id="octoberProjectionPercent">93.3%</div>
+                    </div>
+                </div>
+                
+                <h3 style="margin: 25px 0 15px; color: var(--primary);">
+                    <i class="fas fa-balance-scale"></i> Comparação de Cenários
+                </h3>
+                <div class="scenario-comparison">
+                    <div class="scenario-card">
+                        <h4><i class="fas fa-wind"></i> Cenário Conservador</h4>
+                        <p>Fator de crescimento: <strong>5%</strong></p>
+                        <p>Previsão final: <span class="scenario-value">105</span></p>
+                        <p>Alcance da meta: <strong>87.5%</strong></p>
+                    </div>
+                    
+                    <div class="scenario-card">
+                        <h4><i class="fas fa-bullseye"></i> Cenário Atual</h4>
+                        <p>Fator de crescimento: <strong>15%</strong></p>
+                        <p>Previsão final: <span class="scenario-value">112</span></p>
+                        <p>Alcance da meta: <strong>93.3%</strong></p>
+                    </div>
+                    
+                    <div class="scenario-card">
+                        <h4><i class="fas fa-chart-line"></i> Cenário Otimista</h4>
+                        <p>Fator de crescimento: <strong>25%</strong></p>
+                        <p>Previsão final: <span class="scenario-value">122</span></p>
+                        <p>Alcance da meta: <strong>101.7%</strong></p>
+                    </div>
+                </div>
+                
+                <div class="alert-box">
+                    <i class="fas fa-exclamation-circle"></i> Atenção! A taxa diária necessária para outubro é 16% superior à taxa atual. Considere estratégias adicionais de captação.
+                </div>
+                
+                <div class="export-section">
+                    <h3><i class="fas fa-file-export"></i> Exportar Resultados</h3>
+                    <p>Salve as previsões para análise posterior ou compartilhamento</p>
+                    <div class="button-group">
+                        <button id="exportTxtBtn">
+                            <i class="fas fa-file-download"></i> Baixar como TXT
+                        </button>
+                        <button id="exportCsvBtn" class="secondary">
+                            <i class="fas fa-file-csv"></i> Exportar CSV
+                        </button>
+                        <button id="exportPdfBtn" style="background: var(--danger);">
+                            <i class="fas fa-file-pdf"></i> Exportar PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-chart-bar"></i> Visualização de Dados</h2>
+                
+                <h3 style="margin: 20px 0 10px; color: var(--primary);">
+                    <i class="fas fa-chart-bar"></i> Progresso da Captação
+                </h3>
+                <div class="chart-container">
+                    <canvas id="captationChart"></canvas>
+                </div>
+                
+                <h3 style="margin: 20px 0 10px; color: var(--primary);">
+                    <i class="fas fa-chart-line"></i> Projeção Mensal
+                </h3>
+                <div class="chart-container">
+                    <canvas id="projectionChart"></canvas>
+                </div>
+                
+                <h3 style="margin: 20px 0 10px; color: var(--primary);">
+                    <i class="fas fa-chart-pie"></i> Comparação de Cenários
+                </h3>
+                <div class="chart-container">
+                    <canvas id="scenarioChart"></canvas>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Plataforma de Previsão de Captação &copy; 2025 | Modelos preditivos avançados para tomada de decisão estratégica</p>
+        </footer>
+    </div>
+
+    <script>
+        // Elementos DOM
+        const courseNameInput = document.getElementById('courseName');
+        const goalInput = document.getElementById('goal');
+        const capturedInput = document.getElementById('captured');
+        const daysPassedInput = document.getElementById('daysPassed');
+        const daysRemainingInput = document.getElementById('daysRemaining');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const exampleBtn = document.getElementById('exampleBtn');
+        const exportTxtBtn = document.getElementById('exportTxtBtn');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const dailyRateValue = document.getElementById('dailyRateValue');
+        const currentDateEl = document.getElementById('currentDate');
+        
+        // Elementos de parâmetros do modelo
+        const growthFactorInput = document.getElementById('growthFactor');
+        const seasonalAdjustInput = document.getElementById('seasonalAdjust');
+        const historicalWeightInput = document.getElementById('historicalWeight');
+        const growthFactorValue = document.getElementById('growthFactorValue');
+        const seasonalAdjustValue = document.getElementById('seasonalAdjustValue');
+        const historicalWeightValue = document.getElementById('historicalWeightValue');
+        const saveModelBtn = document.getElementById('saveModelBtn');
+        const resetModelBtn = document.getElementById('resetModelBtn');
+        
+        // Elementos de resultado
+        const totalGoalEl = document.getElementById('totalGoal');
+        const totalCapturedEl = document.getElementById('totalCaptured');
+        const remainingEl = document.getElementById('remaining');
+        const percentageEl = document.getElementById('percentage');
+        const progressFill = document.getElementById('progressFill');
+        const progressPercentage = document.getElementById('progressPercentage');
+        
+        // Elementos de previsão
+        const augustNeededEl = document.getElementById('augustNeeded');
+        const septemberNeededEl = document.getElementById('septemberNeeded');
+        const octoberNeededEl = document.getElementById('octoberNeeded');
+        const augustRateEl = document.getElementById('augustRate');
+        const septemberRateEl = document.getElementById('septemberRate');
+        const octoberRateEl = document.getElementById('octoberRate');
+        const augustDaysEl = document.getElementById('augustDays');
+        const septemberDaysEl = document.getElementById('septemberDays');
+        const octoberDaysEl = document.getElementById('octoberDays');
+        const augustRateIndicator = document.getElementById('augustRateIndicator');
+        const septemberRateIndicator = document.getElementById('septemberRateIndicator');
+        const octoberRateIndicator = document.getElementById('octoberRateIndicator');
+        
+        // Elementos de projeção
+        const augustProjectionEl = document.getElementById('augustProjection');
+        const septemberProjectionEl = document.getElementById('septemberProjection');
+        const octoberProjectionEl = document.getElementById('octoberProjection');
+        const augustProjectionPercentEl = document.getElementById('augustProjectionPercent');
+        const septemberProjectionPercentEl = document.getElementById('septemberProjectionPercent');
+        const octoberProjectionPercentEl = document.getElementById('octoberProjectionPercent');
+        const finalProjectionEl = document.getElementById('finalProjection');
+        const finalProjectionPercentEl = document.getElementById('finalProjectionPercent');
+        
+        // Inicializar gráficos
+        let captationChart, projectionChart, scenarioChart;
+        
+        // Configurar feriados (exemplo para 2025)
+        const holidays2025 = [
+            '2025-01-01', // Ano Novo
+            '2025-03-03', // Carnaval
+            '2025-03-04', // Carnaval
+            '2025-03-05', // Quarta-feira de Cinzas
+            '2025-04-18', // Sexta-feira Santa
+            '2025-04-20', // Páscoa
+            '2025-04-21', // Tiradentes
+            '2025-05-01', // Dia do Trabalho
+            '2025-05-29', // Corpus Christi
+            '2025-09-07', // Independência do Brasil
+            '2025-10-12', // Nossa Senhora Aparecida
+            '2025-11-02', // Finados
+            '2025-11-15', // Proclamação da República
+            '2025-12-25'  // Natal
+        ];
+        
+        moment.updateLocale('pt-br', {
+            holidays: holidays2025,
+            holidayFormat: 'YYYY-MM-DD'
+        });
+        
+        // Configurar data atual
+        const today = new Date();
+        currentDateEl.textContent = today.toLocaleDateString('pt-BR');
+        
+        // Atualizar valores dos parâmetros
+        function updateParamValues() {
+            const growthFactor = parseFloat(growthFactorInput.value);
+            const growthPercent = Math.round((growthFactor - 1) * 100);
+            growthFactorValue.textContent = `${growthPercent}%`;
+            
+            const seasonalAdjust = parseFloat(seasonalAdjustInput.value);
+            const seasonalPercent = Math.round((seasonalAdjust - 1) * 100);
+            seasonalAdjustValue.textContent = `${seasonalPercent}%`;
+            
+            historicalWeightValue.textContent = `${historicalWeightInput.value}%`;
+        }
+        
+        // Calcular dias úteis entre duas datas
+        function calculateBusinessDays(startDate, endDate) {
+            const start = moment(startDate);
+            const end = moment(endDate);
+            return start.businessDiff(end);
+        }
+        
+        // Calcular dias úteis restantes em um mês
+        function getBusinessDaysForMonth(month, year) {
+            const today = moment();
+            const startOfMonth = moment([year, month-1, 1]);
+            const endOfMonth = moment([year, month-1, 1]).endOf('month');
+            
+            // Se o mês já passou
+            if (endOfMonth.isBefore(today, 'day')) {
+                return 0;
+            }
+            
+            // Se estamos no mês, então o início é hoje, senão o primeiro dia do mês
+            let start = today;
+            if (today.isBefore(startOfMonth, 'day')) {
+                start = startOfMonth;
+            }
+            
+            return calculateBusinessDays(start, endOfMonth);
+        }
+        
+        // Atualizar taxa de risco
+        function updateRateIndicator(element, rate) {
+            element.className = 'rate-indicator ';
+            if (rate < 0.7) {
+                element.className += 'rate-low';
+                element.innerHTML = '<i class="fas fa-check-circle"></i> Baixo';
+            } else if (rate < 1.0) {
+                element.className += 'rate-medium';
+                element.innerHTML = '<i class="fas fa-info-circle"></i> Moderado';
+            } else {
+                element.className += 'rate-high';
+                element.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Alto';
+            }
+        }
+        
+        // Função para calcular as previsões usando modelo matemático
+        function calculateProjections() {
+            const goal = parseFloat(goalInput.value) || 0;
+            const captured = parseFloat(capturedInput.value) || 0;
+            const daysPassed = parseFloat(daysPassedInput.value) || 1;
+            
+            // Parâmetros do modelo
+            const growthFactor = parseFloat(growthFactorInput.value);
+            const seasonalAdjust = parseFloat(seasonalAdjustInput.value);
+            const historicalWeight = parseInt(historicalWeightInput.value) / 100;
+            
+            // Verificar dados mínimos
+            if (goal <= 0 || captured < 0 || daysPassed <= 0) {
+                alert("Por favor, preencha todos os campos com valores válidos!");
+                return;
+            }
+            
+            // Calcular dias restantes automaticamente
+            const daysRemaining = 130 - daysPassed;
+            daysRemainingInput.value = daysRemaining > 0 ? daysRemaining : 0;
+            
+            // Atualizar dados básicos
+            const remaining = goal - captured;
+            const percentage = (captured / goal * 100).toFixed(1);
+            
+            totalGoalEl.textContent = goal;
+            totalCapturedEl.textContent = captured;
+            remainingEl.textContent = remaining;
+            percentageEl.textContent = `${percentage}%`;
+            
+            // Calcular taxa diária atual
+            const dailyRate = (captured / daysPassed).toFixed(2);
+            dailyRateValue.textContent = dailyRate;
+            
+            // Atualizar barra de progresso
+            progressFill.style.width = `${percentage}%`;
+            progressFill.textContent = `${percentage}%`;
+            progressPercentage.textContent = `${percentage}%`;
+            
+            // Calcular dias úteis restantes para cada mês
+            const businessDaysAugust = getBusinessDaysForMonth(8, 2025);
+            const businessDaysSeptember = getBusinessDaysForMonth(9, 2025);
+            const businessDaysOctober = getBusinessDaysForMonth(10, 2025);
+            
+            // Atualizar contagem de dias
+            augustDaysEl.textContent = businessDaysAugust;
+            septemberDaysEl.textContent = businessDaysSeptember;
+            octoberDaysEl.textContent = businessDaysOctober;
+            
+            // Calcular taxas diárias necessárias
+            const augustRate = businessDaysAugust > 0 ? (remaining / businessDaysAugust).toFixed(2) : '0.00';
+            const septemberRate = businessDaysSeptember > 0 ? (remaining / businessDaysSeptember).toFixed(2) : '0.00';
+            const octoberRate = businessDaysOctober > 0 ? (remaining / businessDaysOctober).toFixed(2) : '0.00';
+            
+            // Atualizar resultados
+            augustNeededEl.textContent = remaining;
+            septemberNeededEl.textContent = remaining;
+            octoberNeededEl.textContent = remaining;
+            
+            augustRateEl.textContent = augustRate;
+            septemberRateEl.textContent = septemberRate;
+            octoberRateEl.textContent = octoberRate;
+            
+            // Atualizar indicadores de risco
+            updateRateIndicator(augustRateIndicator, augustRate);
+            updateRateIndicator(septemberRateIndicator, septemberRate);
+            updateRateIndicator(octoberRateIndicator, octoberRate);
+            
+            // MODELO MATEMÁTICO: Calcular projeções ao final de cada mês
+            const dailyRateNum = parseFloat(dailyRate);
+            
+            // Aplicar ajuste sazonal para agosto
+            const seasonalDailyRate = dailyRateNum * seasonalAdjust;
+            
+            // Projeção para agosto
+            const augustProjection = Math.min(goal, captured + (seasonalDailyRate * businessDaysAugust * growthFactor));
+            const augustProjectionPercent = ((augustProjection / goal) * 100).toFixed(1);
+            
+            // Projeção para setembro
+            const septProjection = Math.min(goal, augustProjection + (dailyRateNum * businessDaysSeptember * growthFactor));
+            const septProjectionPercent = ((septProjection / goal) * 100).toFixed(1);
+            
+            // Projeção para outubro (final)
+            const octProjection = Math.min(goal, septProjection + (dailyRateNum * businessDaysOctober * growthFactor));
+            const octProjectionPercent = ((octProjection / goal) * 100).toFixed(1);
+            
+            // Atualizar elementos de projeção
+            augustProjectionEl.textContent = Math.round(augustProjection);
+            septemberProjectionEl.textContent = Math.round(septProjection);
+            octoberProjectionEl.textContent = Math.round(octProjection);
+            
+            augustProjectionPercentEl.textContent = `${augustProjectionPercent}%`;
+            septemberProjectionPercentEl.textContent = `${septProjectionPercent}%`;
+            octoberProjectionPercentEl.textContent = `${octProjectionPercent}%`;
+            
+            // Previsão final
+            finalProjectionEl.textContent = Math.round(octProjection);
+            finalProjectionPercentEl.textContent = `${octProjectionPercent}%`;
+            
+            // Atualizar gráficos
+            updateCharts(goal, captured, remaining, 
+                         augustProjection, septProjection, octProjection,
+                         businessDaysAugust, businessDaysSeptember, businessDaysOctober);
+            
+            // Calcular cenários alternativos
+            calculateScenarios(goal, captured, dailyRateNum, businessDaysAugust, businessDaysSeptember, businessDaysOctober);
+        }
+        
+        // Calcular cenários alternativos
+        function calculateScenarios(goal, captured, dailyRate, daysAug, daysSep, daysOct) {
+            // Cenário conservador (5% de crescimento)
+            const conservativeGrowth = 1.05;
+            const conservativeAug = Math.min(goal, captured + (dailyRate * daysAug * conservativeGrowth));
+            const conservativeSep = Math.min(goal, conservativeAug + (dailyRate * daysSep * conservativeGrowth));
+            const conservativeOct = Math.min(goal, conservativeSep + (dailyRate * daysOct * conservativeGrowth));
+            
+            // Cenário otimista (25% de crescimento)
+            const optimisticGrowth = 1.25;
+            const optimisticAug = Math.min(goal, captured + (dailyRate * daysAug * optimisticGrowth));
+            const optimisticSep = Math.min(goal, optimisticAug + (dailyRate * daysSep * optimisticGrowth));
+            const optimisticOct = Math.min(goal, optimisticSep + (dailyRate * daysOct * optimisticGrowth));
+            
+            // Atualizar elementos de cenários
+            document.querySelectorAll('.scenario-value')[0].textContent = Math.round(conservativeOct);
+            document.querySelectorAll('.scenario-value')[1].textContent = Math.round(octoberProjectionEl.textContent);
+            document.querySelectorAll('.scenario-value')[2].textContent = Math.round(optimisticOct);
+            
+            // Atualizar gráfico de cenários
+            updateScenarioChart(conservativeOct, octoberProjectionEl.textContent, optimisticOct, goal);
+        }
+        
+        // Atualizar gráficos
+        function updateCharts(goal, captured, remaining, 
+                             augustProjection, septProjection, octProjection,
+                             daysAugust, daysSeptember, daysOctober) {
+            
+            // Dados para o gráfico de captação (barras)
+            const captationData = {
+                labels: ['Captados', 'Faltam', 'Meta'],
+                datasets: [{
+                    label: 'Captação de Alunos',
+                    data: [captured, remaining, goal],
+                    backgroundColor: [
+                        'rgba(52, 152, 219, 0.7)',
+                        'rgba(231, 76, 60, 0.7)',
+                        'rgba(46, 204, 113, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(52, 152, 219, 1)',
+                        'rgba(231, 76, 60, 1)',
+                        'rgba(46, 204, 113, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            
+            // Dados para o gráfico de projeção
+            const projectionData = {
+                labels: ['Agosto', 'Setembro', 'Outubro'],
+                datasets: [{
+                    label: 'Projeção de Captação',
+                    data: [augustProjection, septProjection, octProjection],
+                    backgroundColor: 'rgba(155, 89, 182, 0.2)',
+                    borderColor: 'rgba(155, 89, 182, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(155, 89, 182, 1)',
+                    pointRadius: 6,
+                    tension: 0.3
+                }, {
+                    label: 'Meta',
+                    data: [goal, goal, goal],
+                    borderColor: 'rgba(46, 204, 113, 1)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                }]
+            };
+            
+            // Configurações dos gráficos
+            const captationConfig = {
+                type: 'bar',
+                data: captationData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Progresso da Captação'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw} alunos`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Número de Alunos'
+                            }
+                        }
+                    }
+                }
+            };
+            
+            const projectionConfig = {
+                type: 'line',
+                data: projectionData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Projeção de Captação ao Final de Cada Mês'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw.toFixed(0)} alunos`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Alunos Captados'
+                            }
+                        }
+                    }
+                }
+            };
+            
+            // Destruir gráficos existentes
+            if (captationChart) captationChart.destroy();
+            if (projectionChart) projectionChart.destroy();
+            
+            // Criar novos gráficos
+            const captationCtx = document.getElementById('captationChart').getContext('2d');
+            const projectionCtx = document.getElementById('projectionChart').getContext('2d');
+            
+            captationChart = new Chart(captationCtx, captationConfig);
+            projectionChart = new Chart(projectionCtx, projectionConfig);
+        }
+        
+        // Atualizar gráfico de cenários
+        function updateScenarioChart(conservative, current, optimistic, goal) {
+            const scenarioData = {
+                labels: ['Conservador', 'Atual', 'Otimista'],
+                datasets: [{
+                    label: 'Previsão Final',
+                    data: [conservative, current, optimistic],
+                    backgroundColor: [
+                        'rgba(52, 152, 219, 0.7)',
+                        'rgba(155, 89, 182, 0.7)',
+                        'rgba(46, 204, 113, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(52, 152, 219, 1)',
+                        'rgba(155, 89, 182, 1)',
+                        'rgba(46, 204, 113, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            
+            const scenarioConfig = {
+                type: 'bar',
+                data: scenarioData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Comparação de Cenários de Captação'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw} alunos`;
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    yMin: goal,
+                                    yMax: goal,
+                                    borderColor: 'rgba(231, 76, 60, 1)',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                    label: {
+                                        content: `Meta: ${goal}`,
+                                        position: 'end',
+                                        backgroundColor: 'rgba(231, 76, 60, 0.8)'
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Alunos Captados'
+                            }
+                        }
+                    }
+                }
+            };
+            
+            if (scenarioChart) scenarioChart.destroy();
+            const scenarioCtx = document.getElementById('scenarioChart').getContext('2d');
+            scenarioChart = new Chart(scenarioCtx, scenarioConfig);
+        }
+        
+        // Resetar formulário
+        function resetForm() {
+            courseNameInput.value = '';
+            goalInput.value = '';
+            capturedInput.value = '';
+            daysPassedInput.value = '';
+            daysRemainingInput.value = '';
+            
+            totalGoalEl.textContent = '0';
+            totalCapturedEl.textContent = '0';
+            remainingEl.textContent = '0';
+            percentageEl.textContent = '0%';
+            dailyRateValue.textContent = '0.00';
+            
+            progressFill.style.width = '0%';
+            progressFill.textContent = '0%';
+            progressPercentage.textContent = '0%';
+            
+            augustNeededEl.textContent = '0';
+            septemberNeededEl.textContent = '0';
+            octoberNeededEl.textContent = '0';
+            augustRateEl.textContent = '0.00';
+            septemberRateEl.textContent = '0.00';
+            octoberRateEl.textContent = '0.00';
+            augustDaysEl.textContent = '0';
+            septemberDaysEl.textContent = '0';
+            octoberDaysEl.textContent = '0';
+            
+            augustProjectionEl.textContent = '0';
+            septemberProjectionEl.textContent = '0';
+            octoberProjectionEl.textContent = '0';
+            augustProjectionPercentEl.textContent = '0%';
+            septemberProjectionPercentEl.textContent = '0%';
+            octoberProjectionPercentEl.textContent = '0%';
+            finalProjectionEl.textContent = '0';
+            finalProjectionPercentEl.textContent = '0%';
+            
+            // Resetar indicadores
+            augustRateIndicator.className = 'rate-indicator';
+            septemberRateIndicator.className = 'rate-indicator';
+            octoberRateIndicator.className = 'rate-indicator';
+            
+            // Destruir gráficos
+            if (captationChart) captationChart.destroy();
+            if (projectionChart) projectionChart.destroy();
+            if (scenarioChart) scenarioChart.destroy();
+        }
+        
+        // Carregar exemplo
+        function loadExample() {
+            courseNameInput.value = 'MBA em Gestão Financeira';
+            goalInput.value = '150';
+            capturedInput.value = '75';
+            daysPassedInput.value = '85';
+            
+            calculateProjections();
+        }
+        
+        // Inicializar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            // Atualizar valores iniciais dos parâmetros
+            updateParamValues();
+            
+            // Event listeners para sliders
+            growthFactorInput.addEventListener('input', function() {
+                updateParamValues();
+                calculateProjections();
+            });
+            
+            seasonalAdjustInput.addEventListener('input', function() {
+                updateParamValues();
+                calculateProjections();
+            });
+            
+            historicalWeightInput.addEventListener('input', function() {
+                updateParamValues();
+                calculateProjections();
+            });
+            
+            // Outros event listeners
+            calculateBtn.addEventListener('click', calculateProjections);
+            resetBtn.addEventListener('click', resetForm);
+            exampleBtn.addEventListener('click', loadExample);
+            exportTxtBtn.addEventListener('click', exportToTxt);
+            exportCsvBtn.addEventListener('click', exportToCsv);
+            exportPdfBtn.addEventListener('click', exportToPdf);
+            saveModelBtn.addEventListener('click', saveModelConfig);
+            resetModelBtn.addEventListener('click', resetModelConfig);
+            
+            daysPassedInput.addEventListener('input', function() {
+                const daysPassed = parseInt(this.value) || 0;
+                const daysRemaining = 130 - daysPassed;
+                daysRemainingInput.value = daysRemaining > 0 ? daysRemaining : 0;
+            });
+            
+            // Calcular projeções iniciais
+            calculateProjections();
+        });
+        
+        // Funções de exportação (simplificadas para exemplo)
+        function exportToTxt() {
+            alert("Exportação TXT selecionada. Em implementação completa, geraria um arquivo texto com todos os dados.");
+        }
+        
+        function exportToCsv() {
+            alert("Exportação CSV selecionada. Em implementação completa, geraria um arquivo CSV com todos os dados.");
+        }
+        
+        function exportToPdf() {
+            alert("Exportação PDF selecionada. Em implementação completa, geraria um relatório PDF profissional.");
+        }
+        
+        function saveModelConfig() {
+            alert("Configurações do modelo salvas com sucesso!");
+        }
+        
+        function resetModelConfig() {
+            growthFactorInput.value = "1.15";
+            seasonalAdjustInput.value = "1.0";
+            historicalWeightInput.value = "60";
+            updateParamValues();
+            calculateProjections();
+            alert("Configurações do modelo revertidas para padrão!");
+        }
+    </script>
+</body>
+</html>
